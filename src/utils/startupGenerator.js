@@ -6,25 +6,32 @@ const businessModels = ["B2B", "B2C", "B2B2C", "Marketplace", "Subscription", "F
 const getRandomItem = (array) => array[Math.floor(Math.random() * array.length)];
 const getRandomNumber = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
-export const generateStartup = () => {
+export const generateStartup = (filters = {}) => {
   const foundedDate = new Date(Date.now() - getRandomNumber(30, 2000) * 24 * 60 * 60 * 1000);
   
   return {
     id: Math.random().toString(36).substr(2, 9),
     name: `${getRandomItem(['Tech', 'Smart', 'Digital', 'Cloud', 'Data', 'AI'])}${getRandomItem(['Hub', 'Labs', 'Solutions', 'Works', 'Pro', 'Flow'])}`,
-    industry: getRandomItem(industries),
-    stage: getRandomItem(stages),
-    location: getRandomItem(locations),
+    industry: filters.industry || getRandomItem(industries),
+    stage: filters.stage || getRandomItem(stages),
+    location: filters.location || getRandomItem(locations),
     foundedDate: foundedDate.toISOString().split('T')[0],
-    employees: getRandomNumber(2, 500),
-    fundingRaised: getRandomNumber(50000, 50000000),
-    businessModel: getRandomItem(businessModels),
-    revenue: Math.random() > 0.3 ? getRandomNumber(0, 10000000) : 0,
+    employees: getRandomNumber(filters.minEmployees || 2, filters.maxEmployees || 500),
+    fundingRaised: getRandomNumber(filters.minFunding || 50000, filters.maxFunding || 50000000),
+    businessModel: filters.businessModel || getRandomItem(businessModels),
+    revenue: Math.random() > 0.3 ? getRandomNumber(0, filters.maxRevenue || 10000000) : 0,
     isProfitable: Math.random() > 0.5,
     website: `www.${getRandomItem(['tech', 'smart', 'digital'])}${getRandomNumber(100, 999)}.com`
   };
 };
 
-export const generateBatch = (count) => {
-  return Array.from({ length: count }, generateStartup);
+export const generateBatch = (count, filters = {}) => {
+  return Array.from({ length: count }, () => generateStartup(filters));
 };
+
+export const getOptions = () => ({
+  industries,
+  stages,
+  locations,
+  businessModels
+});

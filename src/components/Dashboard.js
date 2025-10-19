@@ -1,17 +1,33 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { generateBatch } from '../utils/startupGenerator';
+import { generateBatch, getOptions } from '../utils/startupGenerator';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const [startups, setStartups] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [filters, setFilters] = useState({
+    count: 50,
+    industry: '',
+    stage: '',
+    location: '',
+    businessModel: '',
+    minEmployees: '',
+    maxEmployees: '',
+    minFunding: '',
+    maxFunding: '',
+    maxRevenue: ''
+  });
+
+  const options = getOptions();
 
   const handleGenerate = async () => {
     setLoading(true);
-    // Simulate API call delay
     setTimeout(() => {
-      const newStartups = generateBatch(50);
+      const cleanFilters = Object.fromEntries(
+        Object.entries(filters).filter(([_, value]) => value !== '')
+      );
+      const newStartups = generateBatch(filters.count, cleanFilters);
       setStartups(newStartups);
       setLoading(false);
     }, 1000);
@@ -38,7 +54,70 @@ const Dashboard = () => {
       </header>
 
       <div className="generator-section">
-        <h2>Generate Synthetic Startup Data</h2>
+        <h2>Customize Your Data</h2>
+        <div className="filters-grid">
+          <div className="filter-group">
+            <label>Count</label>
+            <input
+              type="number"
+              value={filters.count}
+              onChange={(e) => setFilters({...filters, count: parseInt(e.target.value)})}
+              min="1"
+              max="1000"
+            />
+          </div>
+          
+          <div className="filter-group">
+            <label>Industry</label>
+            <select value={filters.industry} onChange={(e) => setFilters({...filters, industry: e.target.value})}>
+              <option value="">Any</option>
+              {options.industries.map(industry => (
+                <option key={industry} value={industry}>{industry}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label>Stage</label>
+            <select value={filters.stage} onChange={(e) => setFilters({...filters, stage: e.target.value})}>
+              <option value="">Any</option>
+              {options.stages.map(stage => (
+                <option key={stage} value={stage}>{stage}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label>Location</label>
+            <select value={filters.location} onChange={(e) => setFilters({...filters, location: e.target.value})}>
+              <option value="">Any</option>
+              {options.locations.map(location => (
+                <option key={location} value={location}>{location}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label>Min Employees</label>
+            <input
+              type="number"
+              value={filters.minEmployees}
+              onChange={(e) => setFilters({...filters, minEmployees: e.target.value})}
+              placeholder="2"
+            />
+          </div>
+
+          <div className="filter-group">
+            <label>Max Employees</label>
+            <input
+              type="number"
+              value={filters.maxEmployees}
+              onChange={(e) => setFilters({...filters, maxEmployees: e.target.value})}
+              placeholder="500"
+            />
+          </div>
+        </div>
+
         <button 
           onClick={handleGenerate} 
           disabled={loading}
