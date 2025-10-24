@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Data Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        button { padding: 10px 20px; margin: 10px 0; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f2f2f2; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background-color: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Data Generator</h1>
+        
+        <div>
+            <input type="number" id="recordCount" value="50" min="1" max="1000">
+            <button onclick="generateData()">Generate Data</button>
+            <button onclick="loadData()">Load Data</button>
+        </div>
+        
+        <div id="status"></div>
+        
+        <table id="dataTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th>ID</th><th>Model</th><th>Task</th><th>Input Tokens</th>
+                    <th>Output Tokens</th><th>Latency (ms)</th><th>Accuracy</th>
+                    <th>Rating</th><th>Cost ($)</th>
+                </tr>
+            </thead>
+            <tbody id="dataBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        function generateData() {
+            const records = document.getElementById('recordCount').value;
+            fetch('/generate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({records: parseInt(records)})
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('status').innerHTML = 
+                    `<div class="success">Generated ${data.records} records successfully!</div>`;
+                loadData();
+            });
+        }
+
+        function loadData() {
+            fetch('/data')
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('dataBody');
+                tbody.innerHTML = '';
+                data.forEach(row => {
+                    tbody.innerHTML += `<tr>
+                        <td>${row.id}</td><td>${row.model}</td><td>${row.task}</td>
+                        <td>${row.input_tokens}</td><td>${row.output_tokens}</td>
+                        <td>${row.latency}</td><td>${row.accuracy}</td>
+                        <td>${row.rating}/5</td><td>$${row.cost}</td>
+                    </tr>`;
+                });
+                document.getElementById('dataTable').style.display = 'table';
+            });
+        }
+
+        // Load data on page load
+        loadData();
+    </script>
+</body>
+</html>
