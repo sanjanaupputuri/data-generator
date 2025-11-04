@@ -3,78 +3,663 @@
 <head>
     <title>AI Data Generator</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        button { padding: 10px 20px; margin: 10px 0; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        button:hover { background: #0056b3; }
-        input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #f2f2f2; }
-        .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
-        .success { background-color: #d4edda; color: #155724; }
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --accent: #22c55e;
+            --accent-hover: #16a34a;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+            --accent: #22c55e;
+            --accent-hover: #16a34a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            background: var(--bg-primary); 
+            color: var(--text-primary);
+            height: 100vh; 
+            display: flex;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar { 
+            width: 280px; 
+            background: var(--bg-secondary); 
+            border-right: 1px solid var(--border); 
+            padding: 24px; 
+            overflow-y: auto;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            position: fixed;
+            height: 100vh;
+            z-index: 1000;
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .hamburger {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px;
+            cursor: pointer;
+            z-index: 1001;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .hamburger span {
+            width: 20px;
+            height: 2px;
+            background: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-primary);
+            z-index: 1001;
+        }
+
+        .sidebar h2 { 
+            font-size: 18px; 
+            margin-bottom: 20px; 
+            color: var(--text-primary);
+        }
+
+        .dataset-item { 
+            background: var(--bg-primary); 
+            border: 1px solid var(--border); 
+            border-radius: 6px; 
+            padding: 16px; 
+            margin-bottom: 12px; 
+            cursor: pointer; 
+            transition: all 0.2s;
+        }
+        .dataset-item:hover { 
+            border-color: var(--accent); 
+        }
+        .dataset-item h4 { 
+            font-size: 14px; 
+            margin-bottom: 4px; 
+            color: var(--text-primary);
+        }
+        .dataset-item p { 
+            font-size: 12px; 
+            color: var(--text-secondary);
+        }
+
+        .main-content { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            margin-left: 0;
+            transition: margin-left 0.3s ease;
+        }
+
+        .header { 
+            background: var(--bg-secondary); 
+            padding: 24px 24px 24px 80px; 
+            border-bottom: 1px solid var(--border); 
+        }
+        .header h1 { 
+            font-size: 24px; 
+            margin-bottom: 4px;
+        }
+        .header p { 
+            color: var(--text-secondary); 
+            font-size: 14px;
+        }
+
+        .content { 
+            flex: 1; 
+            display: flex; 
+        }
+
+        .generator, .results { 
+            flex: 1; 
+            padding: 24px; 
+        }
+
+        .results { 
+            border-left: 1px solid var(--border); 
+            background: var(--bg-secondary);
+        }
+
+        .form-group { 
+            margin-bottom: 20px; 
+        }
+
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 500; 
+            font-size: 14px;
+        }
+
+        .textarea, .input { 
+            width: 100%; 
+            padding: 12px; 
+            background: var(--bg-primary); 
+            border: 1px solid var(--border); 
+            border-radius: 6px; 
+            color: var(--text-primary); 
+            font-size: 14px; 
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .textarea { 
+            height: 80px; 
+            resize: vertical; 
+        }
+
+        .textarea:focus, .input:focus { 
+            outline: none; 
+            border-color: var(--accent); 
+        }
+
+        .input-row { 
+            display: flex; 
+            gap: 16px; 
+        }
+
+        .checkbox-group { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            margin-bottom: 12px; 
+        }
+
+        .column-names { 
+            display: none; 
+        }
+
+        .column-input { 
+            width: 100%; 
+            padding: 8px; 
+            background: var(--bg-primary); 
+            border: 1px solid var(--border); 
+            border-radius: 4px; 
+            color: var(--text-primary); 
+            margin-bottom: 8px; 
+            font-size: 13px;
+        }
+
+        .btn { 
+            background: var(--accent); 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 6px; 
+            font-size: 14px; 
+            font-weight: 500; 
+            cursor: pointer; 
+            width: 100%; 
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover { 
+            background: var(--accent-hover); 
+        }
+
+        .btn:disabled { 
+            opacity: 0.5; 
+            cursor: not-allowed; 
+        }
+
+        .status { 
+            padding: 12px; 
+            margin: 16px 0; 
+            border-radius: 6px; 
+            font-size: 14px;
+        }
+
+        .status.loading { 
+            background: var(--bg-tertiary); 
+            color: var(--text-secondary); 
+        }
+
+        .status.success { 
+            background: #dcfce7; 
+            color: #166534; 
+        }
+
+        .status.error { 
+            background: #fef2f2; 
+            color: #dc2626; 
+        }
+
+        .results-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 16px; 
+        }
+
+        .export-buttons { 
+            display: flex; 
+            gap: 8px; 
+        }
+
+        .export-btn { 
+            background: var(--bg-primary); 
+            color: var(--text-primary); 
+            border: 1px solid var(--border); 
+            padding: 8px 16px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 13px;
+        }
+
+        .table-container { 
+            border: 1px solid var(--border); 
+            border-radius: 6px; 
+            overflow: auto; 
+            max-height: 500px;
+        }
+
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+        }
+
+        th { 
+            background: var(--bg-tertiary); 
+            padding: 12px; 
+            text-align: left; 
+            font-weight: 500; 
+            font-size: 13px; 
+            border-bottom: 1px solid var(--border); 
+            position: sticky; 
+            top: 0;
+        }
+
+        td { 
+            padding: 10px 12px; 
+            border-bottom: 1px solid var(--border); 
+            font-size: 13px;
+        }
+
+        tr:hover { 
+            background: var(--bg-tertiary); 
+        }
+
+        .spinner { 
+            display: inline-block; 
+            width: 16px; 
+            height: 16px; 
+            border: 2px solid var(--border); 
+            border-top: 2px solid var(--accent); 
+            border-radius: 50%; 
+            animation: spin 1s linear infinite; 
+            margin-right: 8px; 
+        }
+
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+
+        .overlay.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>AI Data Generator</h1>
-        
-        <div>
-            <input type="number" id="recordCount" value="50" min="1" max="1000">
-            <button onclick="generateData()">Generate Data</button>
-            <button onclick="loadData()">Load Data</button>
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+    
+    <button class="hamburger" onclick="toggleSidebar()">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+    
+    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+    
+    <div class="sidebar" id="sidebar">
+        <h2>Previous Datasets</h2>
+        <div id="datasetHistory"></div>
+    </div>
+    
+    <div class="main-content">
+        <div class="header">
+            <h1>AI Data Generator</h1>
+            <p>Generate structured datasets with AI</p>
         </div>
         
-        <div id="status"></div>
-        
-        <table id="dataTable" style="display:none;">
-            <thead>
-                <tr>
-                    <th>ID</th><th>Model</th><th>Task</th><th>Input Tokens</th>
-                    <th>Output Tokens</th><th>Latency (ms)</th><th>Accuracy</th>
-                    <th>Rating</th><th>Cost ($)</th>
-                </tr>
-            </thead>
-            <tbody id="dataBody"></tbody>
-        </table>
+        <div class="content">
+            <div class="generator">
+                <div class="form-group">
+                    <label for="prompt">Data Description</label>
+                    <textarea id="prompt" class="textarea" placeholder="Describe the data you need..."></textarea>
+                </div>
+
+                <div class="input-row">
+                    <div class="form-group">
+                        <label for="rows">Rows</label>
+                        <input type="number" id="rows" class="input" value="50" min="1" max="1000">
+                    </div>
+                    <div class="form-group">
+                        <label for="columns">Columns</label>
+                        <input type="number" id="columns" class="input" value="5" min="1" max="20">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="customColumns" onchange="toggleColumnNames()">
+                        <label for="customColumns">Custom column names</label>
+                    </div>
+                    <div class="column-names" id="columnNames"></div>
+                </div>
+
+                <button class="btn" onclick="generateData()" id="generateBtn">Generate</button>
+                <div id="status"></div>
+            </div>
+            
+            <div class="results">
+                <div class="results-header">
+                    <h3 id="resultsTitle">Results</h3>
+                    <div class="export-buttons">
+                        <button class="export-btn" onclick="exportData('json')">JSON</button>
+                        <button class="export-btn" onclick="exportData('csv')">CSV</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead id="tableHead"></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        function generateData() {
-            const records = document.getElementById('recordCount').value;
-            fetch('/generate', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({records: parseInt(records)})
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('status').innerHTML = 
-                    `<div class="success">Generated ${data.records} records successfully!</div>`;
-                loadData();
-            });
+        let generatedData = [];
+        let datasetHistory = JSON.parse(localStorage.getItem('datasetHistory') || '[]');
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('show');
         }
 
-        function loadData() {
-            fetch('/data')
-            .then(response => response.json())
-            .then(data => {
-                const tbody = document.getElementById('dataBody');
-                tbody.innerHTML = '';
-                data.forEach(row => {
-                    tbody.innerHTML += `<tr>
-                        <td>${row.id}</td><td>${row.model}</td><td>${row.task}</td>
-                        <td>${row.input_tokens}</td><td>${row.output_tokens}</td>
-                        <td>${row.latency}</td><td>${row.accuracy}</td>
-                        <td>${row.rating}/5</td><td>$${row.cost}</td>
-                    </tr>`;
+        function toggleTheme() {
+            const body = document.body;
+            const button = document.querySelector('.theme-toggle');
+            const isDark = body.getAttribute('data-theme') === 'dark';
+            
+            body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            button.textContent = isDark ? '🌙' : '☀️';
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        }
+
+        function toggleColumnNames() {
+            const checkbox = document.getElementById('customColumns');
+            const columnNames = document.getElementById('columnNames');
+            const columnsInput = document.getElementById('columns');
+            
+            if (checkbox.checked) {
+                columnNames.style.display = 'block';
+                generateColumnInputs(parseInt(columnsInput.value));
+            } else {
+                columnNames.style.display = 'none';
+            }
+        }
+
+        function generateColumnInputs(count) {
+            const container = document.getElementById('columnNames');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < count; i++) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'column-input';
+                input.placeholder = `Column ${i + 1}`;
+                input.id = `column_${i}`;
+                container.appendChild(input);
+            }
+        }
+
+        document.getElementById('columns').addEventListener('change', function() {
+            if (document.getElementById('customColumns').checked) {
+                generateColumnInputs(parseInt(this.value));
+            }
+        });
+
+        function showStatus(message, type = 'loading') {
+            const statusDiv = document.getElementById('status');
+            const spinner = type === 'loading' ? '<div class="spinner"></div>' : '';
+            statusDiv.innerHTML = `<div class="status ${type}">${spinner}${message}</div>`;
+        }
+
+        async function generateData() {
+            const prompt = document.getElementById('prompt').value.trim();
+            const rows = parseInt(document.getElementById('rows').value);
+            const columns = parseInt(document.getElementById('columns').value);
+            const customColumns = document.getElementById('customColumns').checked;
+            
+            if (!prompt) {
+                showStatus('Please describe the data you need', 'error');
+                return;
+            }
+
+            let columnNames = [];
+            if (customColumns) {
+                for (let i = 0; i < columns; i++) {
+                    const input = document.getElementById(`column_${i}`);
+                    if (input && input.value.trim()) {
+                        columnNames.push(input.value.trim());
+                    }
+                }
+            }
+
+            const generateBtn = document.getElementById('generateBtn');
+            generateBtn.disabled = true;
+            showStatus(`Generating ${rows} × ${columns} dataset...`, 'loading');
+            
+            try {
+                const requestData = {
+                    prompt: prompt,
+                    rows: rows,
+                    columns: columns
+                };
+                
+                if (columnNames.length > 0) {
+                    requestData.column_names = columnNames;
+                }
+
+                const response = await fetch('/generate-structured', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(requestData)
                 });
-                document.getElementById('dataTable').style.display = 'table';
-            });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    generatedData = result.data;
+                    
+                    // Ensure exact row count
+                    if (generatedData.length !== rows) {
+                        generatedData = generatedData.slice(0, rows);
+                        if (generatedData.length < rows) {
+                            // Duplicate data to reach exact row count
+                            while (generatedData.length < rows) {
+                                const remaining = rows - generatedData.length;
+                                const toDuplicate = Math.min(remaining, result.data.length);
+                                generatedData = generatedData.concat(result.data.slice(0, toDuplicate));
+                            }
+                        }
+                    }
+                    
+                    // Ensure exact column count
+                    if (generatedData.length > 0) {
+                        const headers = Object.keys(generatedData[0]);
+                        if (headers.length !== columns) {
+                            generatedData = generatedData.map(row => {
+                                const newRow = {};
+                                for (let i = 0; i < columns; i++) {
+                                    const key = headers[i] || `Column_${i + 1}`;
+                                    newRow[key] = row[headers[i]] || `Data_${i + 1}`;
+                                }
+                                return newRow;
+                            });
+                        }
+                    }
+                    
+                    displayResults(generatedData);
+                    saveToHistory(prompt, generatedData);
+                    showStatus(`Generated ${generatedData.length} × ${Object.keys(generatedData[0]).length}`, 'success');
+                } else {
+                    showStatus(result.message, 'error');
+                }
+            } catch (error) {
+                showStatus(error.message, 'error');
+            } finally {
+                generateBtn.disabled = false;
+            }
         }
 
-        // Load data on page load
-        loadData();
+        function displayResults(data) {
+            if (!data || data.length === 0) return;
+            
+            const title = document.getElementById('resultsTitle');
+            const thead = document.getElementById('tableHead');
+            const tbody = document.getElementById('tableBody');
+            
+            const headers = Object.keys(data[0]);
+            title.textContent = `${data.length} × ${headers.length}`;
+            
+            thead.innerHTML = '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+            tbody.innerHTML = data.map(row => 
+                '<tr>' + headers.map(h => `<td>${row[h] || ''}</td>`).join('') + '</tr>'
+            ).join('');
+        }
+
+        function saveToHistory(prompt, data) {
+            const dataset = {
+                id: Date.now(),
+                prompt: prompt.substring(0, 40) + (prompt.length > 40 ? '...' : ''),
+                rows: data.length,
+                columns: Object.keys(data[0] || {}).length,
+                timestamp: new Date().toLocaleDateString(),
+                data: data
+            };
+            
+            datasetHistory.unshift(dataset);
+            if (datasetHistory.length > 8) datasetHistory.pop();
+            
+            localStorage.setItem('datasetHistory', JSON.stringify(datasetHistory));
+            updateHistoryDisplay();
+        }
+
+        function updateHistoryDisplay() {
+            const container = document.getElementById('datasetHistory');
+            container.innerHTML = datasetHistory.map(dataset => `
+                <div class="dataset-item" onclick="loadDataset(${dataset.id})">
+                    <h4>${dataset.prompt}</h4>
+                    <p>${dataset.rows} × ${dataset.columns} • ${dataset.timestamp}</p>
+                </div>
+            `).join('');
+        }
+
+        function loadDataset(id) {
+            const dataset = datasetHistory.find(d => d.id === id);
+            if (dataset) {
+                generatedData = dataset.data;
+                displayResults(generatedData);
+                showStatus('Loaded from history', 'success');
+                toggleSidebar(); // Close sidebar after loading
+            }
+        }
+
+        function exportData(format) {
+            if (!generatedData || generatedData.length === 0) {
+                showStatus('No data to export', 'error');
+                return;
+            }
+            
+            let content, filename, mimeType;
+            
+            if (format === 'json') {
+                content = JSON.stringify(generatedData, null, 2);
+                filename = 'data.json';
+                mimeType = 'application/json';
+            } else if (format === 'csv') {
+                const headers = Object.keys(generatedData[0]);
+                const csvRows = [headers.join(',')];
+                generatedData.forEach(row => {
+                    csvRows.push(headers.map(h => `"${(row[h] || '').toString().replace(/"/g, '""')}"`).join(','));
+                });
+                content = csvRows.join('\\n');
+                filename = 'data.csv';
+                mimeType = 'text/csv';
+            }
+            
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showStatus(`${format.toUpperCase()} exported`, 'success');
+        }
+
+        // Initialize
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.body.setAttribute('data-theme', savedTheme);
+        document.querySelector('.theme-toggle').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+        updateHistoryDisplay();
     </script>
 </body>
 </html>
